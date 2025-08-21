@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Segurança Digital & Matemática — Criptografia</title>
+  <style>
+    :root {
+      --bg: #121212;
+      --card: #1e1e1e;
+      --ink: #e0e0e0;
+      --muted: #a0a0a0;
+      --accent: #00c2ff;
+      --accent-2: #00ff9d;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box }
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    header.hero {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      padding: 30px;
+      border-radius: var(--radius);
+      text-align: center;
+      color: #111;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 0 25px rgba(0,0,0,0.6);
+    }
+    header.hero h1 { margin: 0; font-size: 2.2rem }
+    header.hero p { margin-top: 8px; font-size: 1rem }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 24px;
+      margin-top: 20px;
+      max-width: 800px;
+      width: 100%;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+
+    h2 { margin-top: 0; color: var(--accent) }
+    .muted { color: var(--muted) }
+
+    .controls { display: grid; gap: 12px; margin-top: 12px }
+    input[type="text"], input[type="number"] {
+      padding: 12px; border-radius: var(--radius);
+      border: 1px solid #333; font-size: 1rem;
+      background: #111; color: var(--ink);
+    }
+
+    button {
+      padding: 12px 18px;
+      border-radius: var(--radius);
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      font-size: 1rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #111;
+      transition: transform 0.2s ease;
+    }
+    button:hover { transform: scale(1.05); }
+    button.secondary { background: #333; color: var(--ink); }
+
+    .result {
+      margin-top: 16px;
+      padding: 14px;
+      background: rgba(0, 255, 157, 0.1);
+      border: 1px solid var(--accent-2);
+      border-radius: var(--radius);
+      font-family: monospace;
+    }
+
+    .math-step { margin-top: 10px; font-size: 0.9rem; color: var(--muted) }
+    .footer { margin-top: 30px; font-size: 0.85rem; color: var(--muted); text-align:center }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <h1>🔐 Matemática na Segurança Digital</h1>
+    <p>Criptografia em ação: veja como números viram proteção.</p>
+  </header>
+
+  <section class="card">
+    <h2>Como funciona?</h2>
+    <p class="muted">Na <strong>cifra de César</strong>, cada letra é transformada em um número (A=0, B=1...) e deslocada por uma chave. Isso usa <em>aritmética modular</em>, garantindo que, ao passar do Z, volte para o A.</p>
+  </section>
+
+  <section class="card">
+    <h2>Experimente</h2>
+    <div class="controls">
+      <input id="text" type="text" placeholder="Digite uma mensagem" />
+      <input id="shift" type="number" min="0" max="25" value="3" />
+      <button id="btn-encrypt">Criptografar</button>
+      <button id="btn-decrypt" class="secondary">Descriptografar</button>
+    </div>
+    <div class="result" id="output">Resultado aparecerá aqui 🔎</div>
+    <div class="math-step" id="math-step" hidden>
+      <div id="math-content"></div>
+    </div>
+  </section>
+
+  <p class="footer">✨ Exemplo didático — Cifra de César com <code>mod 26</code></p>
+
+  <script>
+    const A_CODE = 'A'.charCodeAt(0);
+    const Z_CODE = 'Z'.charCodeAt(0);
+    const a_CODE = 'a'.charCodeAt(0);
+    const z_CODE = 'z'.charCodeAt(0);
+
+    function isLetter(code){
+      return (code >= A_CODE && code <= Z_CODE) || (code >= a_CODE && code <= z_CODE);
+    }
+    function shiftChar(code, shift, direction = 1){
+      const isUpper = code >= A_CODE && code <= Z_CODE;
+      const base = isUpper ? A_CODE : a_CODE;
+      const idx = code - base;
+      const moved = (idx + direction * shift + 26) % 26;
+      return base + moved;
+    }
+    function caesar(text, shift, mode = 'encrypt'){
+      const dir = mode === 'encrypt' ? 1 : -1;
+      return [...text].map(ch => {
+        const code = ch.charCodeAt(0);
+        return isLetter(code) ? String.fromCharCode(shiftChar(code, shift, dir)) : ch;
+      }).join('');
+    }
+
+    function explainFirstStep(text, shift, mode){
+      const dir = mode === 'encrypt' ? 1 : -1;
+      const i = [...text].findIndex(ch => /[A-Za-z]/.test(ch));
+      const box = document.getElementById('math-step');
+      const content = document.getElementById('math-content');
+      if(i === -1){ box.hidden = true; return; }
+      const ch = text[i];
+      const code = ch.charCodeAt(0);
+      const isUpper = code >= A_CODE && code <= Z_CODE;
+      const base = isUpper ? A_CODE : a_CODE;
+      const idx = code - base;
+      const moved = (idx + dir*shift + 26) % 26;
+      const newChar = String.fromCharCode(base+moved);
+      content.innerHTML = `'${ch}' → índice ${idx} → (${idx} ${dir>0?'+':'-'} ${shift}) mod 26 = ${moved} → '${newChar}'`;
+      box.hidden = false;
+    }
+
+    const $text = document.getElementById('text');
+    const $shift = document.getElementById('shift');
+    const $out = document.getElementById('output');
+
+    document.getElementById('btn-encrypt').addEventListener('click', () => {
+      const res = caesar($text.value, parseInt($shift.value), 'encrypt');
+      $out.textContent = res;
+      explainFirstStep($text.value, parseInt($shift.value), 'encrypt');
+    });
+    document.getElementById('btn-decrypt').addEventListener('click', () => {
+      const res = caesar($text.value, parseInt($shift.value), 'decrypt');
+      $out.textContent = res;
+      explainFirstStep($text.value, parseInt($shift.value), 'decrypt');
+    });
+  </script>
+</body>
+</html>
